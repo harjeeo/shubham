@@ -29,7 +29,7 @@ async function connect() {
   let symbols: string[];
 
   try {
-    const seed = await getAllTickers("spot");
+    const seed = await getAllTickers("spot,perpetual_futures");
     seed.forEach((t) => tickerCache.set(t.symbol, t));
     symbols = seed.map((t) => t.symbol);
   } catch (err) {
