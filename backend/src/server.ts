@@ -6,7 +6,8 @@ import express from "express";
 import cors from "cors";
 import marketRoutes from "./routes/marketRoutes";
 import { createTickerHub } from "./websocket/tickerHub";
-import { startDeltaWebsocket } from "./services/deltaWebsocketService";
+import { startDeltaWebsocket, getCachedSymbols } from "./services/deltaWebsocketService";
+import { startPivotService } from "./services/pivotService";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -23,6 +24,7 @@ app.use("/api/market", marketRoutes);
 const server = http.createServer(app);
 createTickerHub(server);
 startDeltaWebsocket();
+startPivotService(getCachedSymbols);
 
 server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

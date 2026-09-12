@@ -16,6 +16,10 @@ export function getTickerSnapshot(): DeltaTicker[] {
   return Array.from(tickerCache.values());
 }
 
+export function getCachedSymbols(): string[] {
+  return Array.from(tickerCache.keys());
+}
+
 function scheduleReconnect() {
   setTimeout(connect, reconnectDelay);
   reconnectDelay = Math.min(reconnectDelay * 2, MAX_RECONNECT_DELAY_MS);

@@ -1,8 +1,17 @@
 import { useMemo, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Search01Icon } from "@hugeicons/core-free-icons";
+import { Search01Icon, ArrowUp01Icon, ArrowDown01Icon } from "@hugeicons/core-free-icons";
 import { useLiveTickers } from "../hooks/useLiveTickers";
+import { useLevels } from "../hooks/useLevels";
 import { formatCompact, formatPercent, formatPrice, getChangePercent, toNumber } from "../utils/format";
+import {
+  BULLISH_OPTIONS,
+  BEARISH_OPTIONS,
+  evaluateSignals,
+  type BullishSignalKey,
+  type BearishSignalKey,
+} from "../utils/signals";
+import SignalDropdown from "../components/SignalDropdown";
 import type { Ticker } from "../types/market";
 
 type SortKey = "symbol" | "close" | "change" | "volume" | "oi";
@@ -10,21 +19,34 @@ type SortDir = "asc" | "desc";
 
 export default function Markets() {
   const { tickers, loading, error } = useLiveTickers();
+  const levels = useLevels();
   const [query, setQuery] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("volume");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [bullishFilter, setBullishFilter] = useState<Set<BullishSignalKey>>(new Set());
+  const [bearishFilter, setBearishFilter] = useState<Set<BearishSignalKey>>(new Set());
 
   const rows = useMemo(() => {
     const filtered = tickers.filter((t) =>
       t.symbol.toLowerCase().includes(query.trim().toLowerCase())
     );
 
-    const withChange = filtered.map((t) => ({
+    const withSignals = filtered.map((t) => ({
       ticker: t,
       change: getChangePercent(t.close, t.open),
+      signals: evaluateSignals(t, levels[t.symbol]),
     }));
 
-    withChange.sort((a, b) => {
+    const hasActiveFilter = bullishFilter.size > 0 || bearishFilter.size > 0;
+    const signalFiltered = hasActiveFilter
+      ? withSignals.filter(
+          ({ signals }) =>
+            [...bullishFilter].some((k) => signals.bullish[k]) ||
+            [...bearishFilter].some((k) => signals.bearish[k])
+        )
+      : withSignals;
+
+    signalFiltered.sort((a, b) => {
       let diff = 0;
       switch (sortKey) {
         case "symbol":
@@ -46,8 +68,8 @@ export default function Markets() {
       return sortDir === "asc" ? diff : -diff;
     });
 
-    return withChange;
-  }, [tickers, query, sortKey, sortDir]);
+    return signalFiltered;
+  }, [tickers, levels, query, sortKey, sortDir, bullishFilter, bearishFilter]);
 
   function toggleSort(key: SortKey) {
     if (key === sortKey) {
@@ -67,17 +89,36 @@ export default function Markets() {
         </span>
       </div>
 
-      <div className="relative mb-4 max-w-xs">
-        <HugeiconsIcon
-          icon={Search01Icon}
-          size={18}
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500"
+      <div className="flex flex-wrap items-center gap-3 mb-4">
+        <div className="relative max-w-xs flex-1 min-w-[200px]">
+          <HugeiconsIcon
+            icon={Search01Icon}
+            size={18}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500"
+          />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search symbol..."
+            className="w-full rounded-lg bg-neutral-800 border border-neutral-700 py-2 pl-9 pr-3 text-sm text-neutral-100 placeholder-neutral-500 focus:outline-none focus:border-neutral-500"
+          />
+        </div>
+
+        <SignalDropdown
+          title="Bullish Signal"
+          icon={ArrowUp01Icon}
+          accent="emerald"
+          options={BULLISH_OPTIONS}
+          selected={bullishFilter}
+          onChange={setBullishFilter}
         />
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search symbol..."
-          className="w-full rounded-lg bg-neutral-800 border border-neutral-700 py-2 pl-9 pr-3 text-sm text-neutral-100 placeholder-neutral-500 focus:outline-none focus:border-neutral-500"
+        <SignalDropdown
+          title="Bearish Signal"
+          icon={ArrowDown01Icon}
+          accent="red"
+          options={BEARISH_OPTIONS}
+          selected={bearishFilter}
+          onChange={setBearishFilter}
         />
       </div>
 

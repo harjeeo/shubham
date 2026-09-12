@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { getAllTickers, getTickerBySymbol } from "../services/deltaService";
+import { getAllLevels } from "../services/pivotService";
 
 export async function listTickers(req: Request, res: Response) {
   try {
@@ -21,4 +22,8 @@ export async function getTicker(req: Request, res: Response) {
     console.error("getTicker error:", err);
     res.status(500).json({ success: false, message: "Failed to fetch ticker" });
   }
+}
+
+export function listLevels(_req: Request, res: Response) {
+  res.json({ success: true, data: getAllLevels() });
 }
