@@ -7,14 +7,14 @@ import {
   ChartDecreaseIcon,
   Coins01Icon,
 } from "@hugeicons/core-free-icons";
-import { useTickers } from "../hooks/useTickers";
+import { useLiveTickers } from "../hooks/useLiveTickers";
 import { formatCompact, formatPercent, formatPrice, getChangePercent, toNumber } from "../utils/format";
 import type { Ticker } from "../types/market";
 
 const TOP_N = 5;
 
 export default function Dashboard() {
-  const { tickers, loading, error } = useTickers();
+  const { tickers, loading, error } = useLiveTickers();
 
   const { gainers, losers, gainersCount, losersCount, totalVolume } = useMemo(() => {
     const withChange = tickers.map((t) => ({
@@ -43,7 +43,7 @@ export default function Dashboard() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold">Dashboard</h1>
         <span className="text-xs text-neutral-500">
-          {loading ? "Loading…" : `${tickers.length} pairs tracked · auto-refresh every 5s`}
+          {loading ? "Connecting…" : `${tickers.length} pairs tracked · live`}
         </span>
       </div>
 

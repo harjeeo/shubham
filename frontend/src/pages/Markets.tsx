@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Search01Icon } from "@hugeicons/core-free-icons";
-import { useTickers } from "../hooks/useTickers";
+import { useLiveTickers } from "../hooks/useLiveTickers";
 import { formatCompact, formatPercent, formatPrice, getChangePercent, toNumber } from "../utils/format";
 import type { Ticker } from "../types/market";
 
@@ -9,7 +9,7 @@ type SortKey = "symbol" | "close" | "change" | "volume" | "oi";
 type SortDir = "asc" | "desc";
 
 export default function Markets() {
-  const { tickers, loading, error } = useTickers();
+  const { tickers, loading, error } = useLiveTickers();
   const [query, setQuery] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("volume");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
@@ -63,7 +63,7 @@ export default function Markets() {
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-semibold">Markets</h1>
         <span className="text-xs text-neutral-500">
-          {loading ? "Loading…" : `${rows.length} pairs · auto-refresh every 5s`}
+          {loading ? "Connecting…" : `${rows.length} pairs · live`}
         </span>
       </div>
 

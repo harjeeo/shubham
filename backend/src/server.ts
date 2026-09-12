@@ -1,9 +1,12 @@
 import dotenv from "dotenv";
 dotenv.config();
 
+import http from "http";
 import express from "express";
 import cors from "cors";
 import marketRoutes from "./routes/marketRoutes";
+import { createTickerHub } from "./websocket/tickerHub";
+import { startDeltaWebsocket } from "./services/deltaWebsocketService";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -17,6 +20,11 @@ app.get("/", (_req, res) => {
 
 app.use("/api/market", marketRoutes);
 
-app.listen(PORT, () => {
+const server = http.createServer(app);
+createTickerHub(server);
+startDeltaWebsocket();
+
+server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`WebSocket ticker feed at ws://localhost:${PORT}/ws/tickers`);
 });
