@@ -38,7 +38,7 @@ function cacheKey(symbol: string, timeframe: Timeframe): string {
 }
 
 async function getWeeklyCandles(symbol: string): Promise<Candle[]> {
-  const daily = await getCandles(symbol, "1d", 90);
+  const daily = await getCandles(symbol, "1d", 400);
   const sorted = [...daily].sort((a, b) => a.time - b.time);
 
   const buckets = new Map<number, Candle[]>();
@@ -61,47 +61,74 @@ async function getWeeklyCandles(symbol: string): Promise<Candle[]> {
     }));
 }
 
-// Extends the classic 3 pivot levels (R1-R3 / S1-S3) with the same recurrence
-// used to derive R4/R5 in the traditional formula: each next level is the
-// previous one plus the trend of the last two. Applied out to R15/S15.
-function extendLevels([l1, l2, l3]: [number, number, number], count: number): number[] {
-  const levels = [l1, l2, l3];
-  for (let n = 3; n < count; n++) {
-    levels.push(levels[n - 1] + (levels[n - 2] - levels[n - 3]));
+// How many candles on each side must be lower/higher for a candle to count
+// as a swing high/low (a real turning point in price, not just noise).
+const SWING_STRENGTH = 3;
+// Swing points within this % of each other are the same real level touched
+// more than once (like the horizontal zones on a chart), so they get merged.
+const CLUSTER_TOLERANCE = 0.005;
+
+function detectSwings(candles: Candle[], strength: number): { highs: number[]; lows: number[] } {
+  const highs: number[] = [];
+  const lows: number[] = [];
+
+  for (let i = strength; i < candles.length - strength; i++) {
+    const window = candles.slice(i - strength, i + strength + 1);
+    if (candles[i].high === Math.max(...window.map((c) => c.high))) highs.push(candles[i].high);
+    if (candles[i].low === Math.min(...window.map((c) => c.low))) lows.push(candles[i].low);
   }
-  return levels;
+
+  return { highs, lows };
 }
 
-function pivotsFrom(prev: Candle) {
-  const { high: H, low: L, close: C } = prev;
-  const pivot = (H + L + C) / 3;
-  const r1 = 2 * pivot - L;
-  const s1 = 2 * pivot - H;
-  const r2 = pivot + (H - L);
-  const s2 = pivot - (H - L);
-  const r3 = H + 2 * (pivot - L);
-  const s3 = L - 2 * (H - pivot);
-  return {
-    pivot,
-    r: extendLevels([r1, r2, r3], PIVOT_LEVEL_COUNT),
-    s: extendLevels([s1, s2, s3], PIVOT_LEVEL_COUNT),
-  };
+function clusterLevels(levels: number[], tolerance: number): number[] {
+  if (levels.length === 0) return [];
+  const sorted = [...levels].sort((a, b) => a - b);
+  const clusters: number[][] = [[sorted[0]]];
+
+  for (let i = 1; i < sorted.length; i++) {
+    const current = clusters[clusters.length - 1];
+    const clusterAvg = current.reduce((sum, v) => sum + v, 0) / current.length;
+    if ((sorted[i] - clusterAvg) / clusterAvg <= tolerance) {
+      current.push(sorted[i]);
+    } else {
+      clusters.push([sorted[i]]);
+    }
+  }
+
+  return clusters.map((c) => c.reduce((sum, v) => sum + v, 0) / c.length);
 }
 
 async function computeLevels(symbol: string, timeframe: Timeframe): Promise<SymbolLevels | null> {
-  const candles = timeframe === "1w" ? await getWeeklyCandles(symbol) : await getCandles(symbol, timeframe, 40);
+  const candles = timeframe === "1w" ? await getWeeklyCandles(symbol) : await getCandles(symbol, timeframe, 150);
   const sorted = [...candles].sort((a, b) => a.time - b.time);
-  if (sorted.length < 2) return null;
+  if (sorted.length < SWING_STRENGTH * 2 + 2) return null;
 
   const current = sorted[sorted.length - 1];
-  const prev = sorted[sorted.length - 2];
-  const { pivot, r, s } = pivotsFrom(prev);
+  const price = current.close;
+
+  // The still-forming current candle isn't a confirmed swing point yet.
+  const { highs, lows } = detectSwings(sorted.slice(0, -1), SWING_STRENGTH);
+  const resistanceLevels = clusterLevels(highs, CLUSTER_TOLERANCE);
+  const supportLevels = clusterLevels(lows, CLUSTER_TOLERANCE);
+
+  // R1 = nearest historical resistance above the current price, R2 = next one
+  // up, etc. S1 = nearest support below price, S2 = next one down, etc. -
+  // i.e. real chart levels, not a formula derived from a single candle.
+  const r = resistanceLevels
+    .filter((level) => level > price)
+    .sort((a, b) => a - b)
+    .slice(0, PIVOT_LEVEL_COUNT);
+  const s = supportLevels
+    .filter((level) => level < price)
+    .sort((a, b) => b - a)
+    .slice(0, PIVOT_LEVEL_COUNT);
 
   return {
     symbol,
     high: current.high,
     low: current.low,
-    pivot,
+    pivot: (current.high + current.low + current.close) / 3,
     r,
     s,
   };
