@@ -1,13 +1,11 @@
 import type { SymbolLevels, Ticker } from "../types/market";
 import { toNumber } from "./format";
 
-export type BullishSignalKey = "dayHigh" | "weeklyHigh" | "monthlyHigh" | "r1" | "r2" | "r3" | "r4" | "r5";
-export type BearishSignalKey = "dayLow" | "weeklyLow" | "monthlyLow" | "s1" | "s2" | "s3" | "s4" | "s5";
+export type BullishSignalKey = "high" | "r1" | "r2" | "r3" | "r4" | "r5";
+export type BearishSignalKey = "low" | "s1" | "s2" | "s3" | "s4" | "s5";
 
 export const BULLISH_OPTIONS: { key: BullishSignalKey; label: string }[] = [
-  { key: "dayHigh", label: "Day High" },
-  { key: "weeklyHigh", label: "Weekly High" },
-  { key: "monthlyHigh", label: "Monthly High" },
+  { key: "high", label: "High" },
   { key: "r1", label: "R1 Breakout" },
   { key: "r2", label: "R2 Breakout" },
   { key: "r3", label: "R3 Breakout" },
@@ -16,9 +14,7 @@ export const BULLISH_OPTIONS: { key: BullishSignalKey; label: string }[] = [
 ];
 
 export const BEARISH_OPTIONS: { key: BearishSignalKey; label: string }[] = [
-  { key: "dayLow", label: "Day Low" },
-  { key: "weeklyLow", label: "Weekly Low" },
-  { key: "monthlyLow", label: "Monthly Low" },
+  { key: "low", label: "Low" },
   { key: "s1", label: "S1 Breakout" },
   { key: "s2", label: "S2 Breakout" },
   { key: "s3", label: "S3 Breakout" },
@@ -26,8 +22,8 @@ export const BEARISH_OPTIONS: { key: BearishSignalKey; label: string }[] = [
   { key: "s5", label: "S5 Breakout" },
 ];
 
-// Live high/low keep updating to match the current price the instant a new
-// extreme prints, so a strict close === high/low match almost never holds.
+// A live "high"/"low" keeps updating to match the current price the instant a
+// new extreme prints, so a strict close === high/low match almost never holds.
 // A small tolerance treats "sitting at/near the level" as the signal instead.
 const NEAR_LEVEL_TOLERANCE = 0.0015;
 
@@ -41,24 +37,15 @@ export function evaluateSignals(
   levels: SymbolLevels | undefined
 ): { bullish: Record<BullishSignalKey, boolean>; bearish: Record<BearishSignalKey, boolean> } {
   const close = toNumber(ticker.close);
-  // Some ticker payloads omit today's intraday high/low; fall back to the
-  // last known daily candle so Day High/Low still has something to compare against.
-  const todayHigh = toNumber(ticker.high) || levels?.prevDayHigh || 0;
-  const todayLow = toNumber(ticker.low) || levels?.prevDayLow || 0;
 
-  const weekHigh = Math.max(levels?.weekHigh ?? -Infinity, todayHigh);
-  const weekLow = Math.min(levels?.weekLow ?? Infinity, todayLow || Infinity);
-  const monthHigh = Math.max(levels?.monthHigh ?? -Infinity, todayHigh);
-  const monthLow = Math.min(levels?.monthLow ?? Infinity, todayLow || Infinity);
-
+  const high = levels?.high ?? 0;
+  const low = levels?.low ?? 0;
   const [r1, r2, r3, r4, r5] = levels?.r ?? [Infinity, Infinity, Infinity, Infinity, Infinity];
   const [s1, s2, s3, s4, s5] = levels?.s ?? [-Infinity, -Infinity, -Infinity, -Infinity, -Infinity];
 
   return {
     bullish: {
-      dayHigh: isNear(close, todayHigh, "above"),
-      weeklyHigh: isNear(close, weekHigh, "above"),
-      monthlyHigh: isNear(close, monthHigh, "above"),
+      high: isNear(close, high, "above"),
       r1: close > r1,
       r2: close > r2,
       r3: close > r3,
@@ -66,9 +53,7 @@ export function evaluateSignals(
       r5: close > r5,
     },
     bearish: {
-      dayLow: isNear(close, todayLow, "below"),
-      weeklyLow: isNear(close, weekLow, "below"),
-      monthlyLow: isNear(close, monthLow, "below"),
+      low: isNear(close, low, "below"),
       s1: close < s1,
       s2: close < s2,
       s3: close < s3,

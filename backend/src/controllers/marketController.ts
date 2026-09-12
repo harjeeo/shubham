@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { getAllTickers, getTickerBySymbol } from "../services/deltaService";
-import { getAllLevels } from "../services/pivotService";
+import { getAllLevels, isTimeframe, type Timeframe } from "../services/pivotService";
+import { getCachedSymbols } from "../services/deltaWebsocketService";
 
 export async function listTickers(req: Request, res: Response) {
   try {
@@ -25,6 +26,13 @@ export async function getTicker(req: Request, res: Response) {
   }
 }
 
-export function listLevels(_req: Request, res: Response) {
-  res.json({ success: true, data: getAllLevels() });
+export async function listLevels(req: Request, res: Response) {
+  try {
+    const timeframe: Timeframe = isTimeframe(req.query.timeframe) ? req.query.timeframe : "1d";
+    const levels = await getAllLevels(getCachedSymbols(), timeframe);
+    res.json({ success: true, data: levels });
+  } catch (err) {
+    console.error("listLevels error:", err);
+    res.status(500).json({ success: false, message: "Failed to fetch levels" });
+  }
 }

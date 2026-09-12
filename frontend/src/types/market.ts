@@ -13,14 +13,14 @@ export interface Ticker {
   [key: string]: unknown;
 }
 
+export type Timeframe = "5m" | "15m" | "1h" | "4h" | "1d" | "1w";
+
+export const TIMEFRAMES: Timeframe[] = ["5m", "15m", "1h", "4h", "1d", "1w"];
+
 export interface SymbolLevels {
   symbol: string;
-  prevDayHigh: number;
-  prevDayLow: number;
-  weekHigh: number;
-  weekLow: number;
-  monthHigh: number;
-  monthLow: number;
+  high: number;
+  low: number;
   pivot: number;
   r: [number, number, number, number, number];
   s: [number, number, number, number, number];

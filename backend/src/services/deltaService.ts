@@ -38,11 +38,25 @@ export async function getTickerBySymbol(symbol: string): Promise<DeltaTicker> {
   return data.result as DeltaTicker;
 }
 
-export async function getDailyCandles(symbol: string, days = 35): Promise<Candle[]> {
+export type CandleResolution = "5m" | "15m" | "1h" | "4h" | "1d";
+
+const RESOLUTION_SECONDS: Record<CandleResolution, number> = {
+  "5m": 300,
+  "15m": 900,
+  "1h": 3600,
+  "4h": 14400,
+  "1d": 86400,
+};
+
+export async function getCandles(
+  symbol: string,
+  resolution: CandleResolution,
+  periods = 40
+): Promise<Candle[]> {
   const end = Math.floor(Date.now() / 1000);
-  const start = end - days * 86400;
+  const start = end - RESOLUTION_SECONDS[resolution] * periods;
   const { data } = await axios.get(`${DELTA_BASE_URL}/v2/history/candles`, {
-    params: { resolution: "1d", symbol, start, end },
+    params: { resolution, symbol, start, end },
   });
   return (data.result ?? []) as Candle[];
 }

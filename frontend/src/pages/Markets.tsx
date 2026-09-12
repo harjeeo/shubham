@@ -12,7 +12,7 @@ import {
   type BearishSignalKey,
 } from "../utils/signals";
 import SignalDropdown from "../components/SignalDropdown";
-import type { Ticker } from "../types/market";
+import { TIMEFRAMES, type Ticker, type Timeframe } from "../types/market";
 
 type SortKey = "symbol" | "close" | "change" | "volume" | "oi";
 type SortDir = "asc" | "desc";
@@ -21,7 +21,8 @@ type SignalColumn = { key: BullishSignalKey | BearishSignalKey; label: string; g
 
 export default function Markets() {
   const { tickers, loading, error } = useLiveTickers();
-  const levels = useLevels();
+  const [timeframe, setTimeframe] = useState<Timeframe>("1d");
+  const levels = useLevels(timeframe);
   const [query, setQuery] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("volume");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
@@ -131,6 +132,20 @@ export default function Markets() {
           selected={bearishFilter}
           onChange={setBearishFilter}
         />
+
+        <div className="flex items-center rounded-full border border-neutral-700 bg-neutral-900 p-0.5">
+          {TIMEFRAMES.map((tf) => (
+            <button
+              key={tf}
+              onClick={() => setTimeframe(tf)}
+              className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
+                timeframe === tf ? "bg-neutral-700 text-neutral-100" : "text-neutral-400 hover:text-neutral-200"
+              }`}
+            >
+              {tf}
+            </button>
+          ))}
+        </div>
       </div>
 
       {error && (
