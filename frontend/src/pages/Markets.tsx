@@ -69,7 +69,8 @@ export default function Markets() {
           diff = (a.change ?? 0) - (b.change ?? 0);
           break;
         case "volume":
-          diff = toNumber(a.ticker.volume) - toNumber(b.ticker.volume);
+          diff =
+            toNumber(a.ticker.turnover_usd ?? a.ticker.volume) - toNumber(b.ticker.turnover_usd ?? b.ticker.volume);
           break;
         case "oi":
           diff = toNumber(a.ticker.oi_value_usd ?? a.ticker.oi) - toNumber(b.ticker.oi_value_usd ?? b.ticker.oi);
@@ -145,7 +146,7 @@ export default function Markets() {
               <Th label="Symbol" onClick={() => toggleSort("symbol")} active={sortKey === "symbol"} dir={sortDir} />
               <Th label="Last Price" onClick={() => toggleSort("close")} active={sortKey === "close"} dir={sortDir} align="right" />
               <Th label="24h Change" onClick={() => toggleSort("change")} active={sortKey === "change"} dir={sortDir} align="right" />
-              <Th label="Volume" onClick={() => toggleSort("volume")} active={sortKey === "volume"} dir={sortDir} align="right" />
+              <Th label="24h Volume" onClick={() => toggleSort("volume")} active={sortKey === "volume"} dir={sortDir} align="right" />
               <Th label="Open Interest" onClick={() => toggleSort("oi")} active={sortKey === "oi"} dir={sortDir} align="right" />
               {activeColumns.map((col) => (
                 <th
@@ -196,7 +197,9 @@ function Row({
       <td className="px-4 py-3 font-medium text-neutral-100">{ticker.symbol}</td>
       <td className="px-4 py-3 text-right tabular-nums">{formatPrice(ticker.close)}</td>
       <td className={`px-4 py-3 text-right tabular-nums ${changeColor}`}>{formatPercent(change)}</td>
-      <td className="px-4 py-3 text-right tabular-nums text-neutral-300">{formatCompact(ticker.volume)}</td>
+      <td className="px-4 py-3 text-right tabular-nums text-neutral-300">
+        {formatCompact(ticker.turnover_usd ?? ticker.volume)}
+      </td>
       <td className="px-4 py-3 text-right tabular-nums text-neutral-300">
         {formatCompact(ticker.oi_value_usd ?? ticker.oi)}
       </td>
