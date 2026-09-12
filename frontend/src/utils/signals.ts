@@ -32,6 +32,16 @@ function isNear(value: number, level: number, direction: "above" | "below"): boo
   return direction === "above" ? value >= level * (1 - NEAR_LEVEL_TOLERANCE) : value <= level * (1 + NEAR_LEVEL_TOLERANCE);
 }
 
+// Right after a new candle opens, its high and low both equal the first
+// trade's price (no range has formed yet), so "near the high" and "near the
+// low" trivially match at the same time. Require a spread meaningfully wider
+// than the tolerance band before trusting either signal.
+function hasMeaningfulRange(high: number, low: number): boolean {
+  if (!Number.isFinite(high) || !Number.isFinite(low) || high <= 0 || low <= 0) return false;
+  const mid = (high + low) / 2;
+  return (high - low) / mid > NEAR_LEVEL_TOLERANCE * 3;
+}
+
 export function evaluateSignals(
   ticker: Ticker,
   levels: SymbolLevels | undefined
@@ -40,12 +50,13 @@ export function evaluateSignals(
 
   const high = levels?.high ?? 0;
   const low = levels?.low ?? 0;
+  const rangeOk = hasMeaningfulRange(high, low);
   const [r1, r2, r3, r4, r5] = levels?.r ?? [Infinity, Infinity, Infinity, Infinity, Infinity];
   const [s1, s2, s3, s4, s5] = levels?.s ?? [-Infinity, -Infinity, -Infinity, -Infinity, -Infinity];
 
   return {
     bullish: {
-      high: isNear(close, high, "above"),
+      high: rangeOk && isNear(close, high, "above"),
       r1: close > r1,
       r2: close > r2,
       r3: close > r3,
@@ -53,7 +64,7 @@ export function evaluateSignals(
       r5: close > r5,
     },
     bearish: {
-      low: isNear(close, low, "below"),
+      low: rangeOk && isNear(close, low, "below"),
       s1: close < s1,
       s2: close < s2,
       s3: close < s3,
