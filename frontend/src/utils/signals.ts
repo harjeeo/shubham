@@ -26,6 +26,16 @@ export const BEARISH_OPTIONS: { key: BearishSignalKey; label: string }[] = [
   { key: "s5", label: "S5 Breakout" },
 ];
 
+// Live high/low keep updating to match the current price the instant a new
+// extreme prints, so a strict close === high/low match almost never holds.
+// A small tolerance treats "sitting at/near the level" as the signal instead.
+const NEAR_LEVEL_TOLERANCE = 0.0015;
+
+function isNear(value: number, level: number, direction: "above" | "below"): boolean {
+  if (!Number.isFinite(level) || level === 0) return false;
+  return direction === "above" ? value >= level * (1 - NEAR_LEVEL_TOLERANCE) : value <= level * (1 + NEAR_LEVEL_TOLERANCE);
+}
+
 export function evaluateSignals(
   ticker: Ticker,
   levels: SymbolLevels | undefined
@@ -44,9 +54,9 @@ export function evaluateSignals(
 
   return {
     bullish: {
-      dayHigh: todayHigh > 0 && close >= todayHigh,
-      weeklyHigh: weekHigh !== -Infinity && close >= weekHigh,
-      monthlyHigh: monthHigh !== -Infinity && close >= monthHigh,
+      dayHigh: isNear(close, todayHigh, "above"),
+      weeklyHigh: isNear(close, weekHigh, "above"),
+      monthlyHigh: isNear(close, monthHigh, "above"),
       r1: close > r1,
       r2: close > r2,
       r3: close > r3,
@@ -54,9 +64,9 @@ export function evaluateSignals(
       r5: close > r5,
     },
     bearish: {
-      dayLow: todayLow > 0 && close <= todayLow,
-      weeklyLow: weekLow !== Infinity && close <= weekLow,
-      monthlyLow: monthLow !== Infinity && close <= monthLow,
+      dayLow: isNear(close, todayLow, "below"),
+      weeklyLow: isNear(close, weekLow, "below"),
+      monthlyLow: isNear(close, monthLow, "below"),
       s1: close < s1,
       s2: close < s2,
       s3: close < s3,
