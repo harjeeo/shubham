@@ -4,7 +4,7 @@ import { getAllLevels } from "../services/pivotService";
 
 export async function listTickers(req: Request, res: Response) {
   try {
-    const contractTypes = typeof req.query.contract_types === "string" ? req.query.contract_types : undefined;
+    const contractTypes = typeof req.query.contract_types === "string" ? req.query.contract_types : "spot";
     const tickers = await getAllTickers(contractTypes);
     res.json({ success: true, data: tickers });
   } catch (err) {
