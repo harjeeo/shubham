@@ -20,8 +20,8 @@ const navItems = [
 
 export default function Sidebar() {
   return (
-    <aside className="h-screen w-60 shrink-0 bg-neutral-950 text-neutral-200 flex flex-col border-r border-neutral-800">
-      <div className="px-5 py-5 text-lg font-semibold text-white">
+    <aside className="h-screen w-60 shrink-0 bg-neutral-950 text-neutral-200 flex flex-col border-r border-neutral-800 light:bg-white light:text-neutral-700 light:border-neutral-200">
+      <div className="px-5 py-5 text-lg font-semibold text-white light:text-neutral-900">
         Crypto Screener
       </div>
       <nav className="flex-1 px-2 space-y-1">
@@ -33,8 +33,8 @@ export default function Sidebar() {
             className={({ isActive }) =>
               `flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
                 isActive
-                  ? "bg-neutral-800 text-white"
-                  : "text-neutral-400 hover:bg-neutral-900 hover:text-neutral-200"
+                  ? "bg-neutral-800 text-white light:bg-neutral-100 light:text-neutral-900"
+                  : "text-neutral-400 hover:bg-neutral-900 hover:text-neutral-200 light:text-neutral-500 light:hover:bg-neutral-100 light:hover:text-neutral-900"
               }`
             }
           >

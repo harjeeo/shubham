@@ -48,33 +48,44 @@ export default function Dashboard() {
       </div>
 
       {error && (
-        <div className="mb-4 rounded-lg border border-red-900 bg-red-950/50 px-4 py-2 text-sm text-red-300">
+        <div className="mb-4 rounded-lg border border-red-900 bg-red-950/50 px-4 py-2 text-sm text-red-300 light:border-red-200 light:bg-red-50 light:text-red-600">
           {error}
         </div>
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <StatCard icon={Coins01Icon} label="Pairs Tracked" value={String(tickers.length)} />
-        <StatCard icon={ChartIncreaseIcon} label="Gainers" value={String(gainersCount)} accent="text-emerald-400" />
-        <StatCard icon={ChartDecreaseIcon} label="Losers" value={String(losersCount)} accent="text-red-400" />
+        <StatCard
+          icon={ChartIncreaseIcon}
+          label="Gainers"
+          value={String(gainersCount)}
+          accent="text-emerald-400 light:text-emerald-600"
+        />
+        <StatCard
+          icon={ChartDecreaseIcon}
+          label="Losers"
+          value={String(losersCount)}
+          accent="text-red-400 light:text-red-600"
+        />
       </div>
 
-      <div className="mb-4 text-xs text-neutral-500">
-        Total 24h Turnover: <span className="text-neutral-300">${formatCompact(totalVolume)}</span>
+      <div className="mb-4 text-xs text-neutral-500 light:text-neutral-500">
+        Total 24h Turnover:{" "}
+        <span className="text-neutral-300 light:text-neutral-700">${formatCompact(totalVolume)}</span>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <MoversPanel
           title="Top Gainers"
           icon={ArrowUp01Icon}
-          accent="text-emerald-400"
+          accent="text-emerald-400 light:text-emerald-600"
           rows={gainers}
           emptyLabel="No gainers right now."
         />
         <MoversPanel
           title="Top Losers"
           icon={ArrowDown01Icon}
-          accent="text-red-400"
+          accent="text-red-400 light:text-red-600"
           rows={losers}
           emptyLabel="No losers right now."
         />
@@ -87,7 +98,7 @@ function StatCard({
   icon,
   label,
   value,
-  accent = "text-neutral-100",
+  accent = "text-neutral-100 light:text-neutral-900",
 }: {
   icon: typeof Coins01Icon;
   label: string;
@@ -95,8 +106,8 @@ function StatCard({
   accent?: string;
 }) {
   return (
-    <div className="rounded-lg border border-neutral-800 bg-neutral-900/60 p-4 flex items-center gap-3">
-      <div className="rounded-lg bg-neutral-800 p-2">
+    <div className="rounded-lg border border-neutral-800 bg-neutral-900/60 p-4 flex items-center gap-3 light:border-neutral-200 light:bg-white">
+      <div className="rounded-lg bg-neutral-800 p-2 light:bg-neutral-100">
         <HugeiconsIcon icon={icon} size={20} className={accent} />
       </div>
       <div>
@@ -121,17 +132,22 @@ function MoversPanel({
   emptyLabel: string;
 }) {
   return (
-    <div className="rounded-lg border border-neutral-800 overflow-hidden">
-      <div className="flex items-center gap-2 bg-neutral-900 px-4 py-3">
+    <div className="rounded-lg border border-neutral-800 overflow-hidden light:border-neutral-200">
+      <div className="flex items-center gap-2 bg-neutral-900 px-4 py-3 light:bg-neutral-50">
         <HugeiconsIcon icon={icon} size={18} className={accent} />
         <h2 className="text-sm font-medium">{title}</h2>
       </div>
       <table className="w-full text-sm">
         <tbody>
           {rows.map(({ ticker, change }) => (
-            <tr key={ticker.symbol} className="border-t border-neutral-800 hover:bg-neutral-900/60">
-              <td className="px-4 py-3 font-medium text-neutral-100">{ticker.symbol}</td>
-              <td className="px-4 py-3 text-right tabular-nums text-neutral-300">{formatPrice(ticker.close)}</td>
+            <tr
+              key={ticker.symbol}
+              className="border-t border-neutral-800 hover:bg-neutral-900/60 light:border-neutral-200 light:hover:bg-neutral-50"
+            >
+              <td className="px-4 py-3 font-medium text-neutral-100 light:text-neutral-900">{ticker.symbol}</td>
+              <td className="px-4 py-3 text-right tabular-nums text-neutral-300 light:text-neutral-600">
+                {formatPrice(ticker.close)}
+              </td>
               <td className={`px-4 py-3 text-right tabular-nums font-medium ${accent}`}>
                 {formatPercent(change)}
               </td>

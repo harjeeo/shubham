@@ -112,7 +112,7 @@ export default function Markets() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search symbol..."
-            className="w-full rounded-lg bg-neutral-800 border border-neutral-700 py-2 pl-9 pr-3 text-sm text-neutral-100 placeholder-neutral-500 focus:outline-none focus:border-neutral-500"
+            className="w-full rounded-lg bg-neutral-800 border border-neutral-700 py-2 pl-9 pr-3 text-sm text-neutral-100 placeholder-neutral-500 focus:outline-none focus:border-neutral-500 light:bg-white light:border-neutral-300 light:text-neutral-900 light:placeholder-neutral-400"
           />
         </div>
 
@@ -133,13 +133,15 @@ export default function Markets() {
           onChange={setBearishFilter}
         />
 
-        <div className="flex items-center rounded-full border border-neutral-700 bg-neutral-900 p-0.5">
+        <div className="flex items-center rounded-full border border-neutral-700 bg-neutral-900 p-0.5 light:border-neutral-300 light:bg-white">
           {TIMEFRAMES.map((tf) => (
             <button
               key={tf}
               onClick={() => setTimeframe(tf)}
               className={`rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
-                timeframe === tf ? "bg-neutral-700 text-neutral-100" : "text-neutral-400 hover:text-neutral-200"
+                timeframe === tf
+                  ? "bg-neutral-700 text-neutral-100 light:bg-neutral-200 light:text-neutral-900"
+                  : "text-neutral-400 hover:text-neutral-200 light:text-neutral-500 light:hover:text-neutral-900"
               }`}
             >
               {tf}
@@ -149,15 +151,15 @@ export default function Markets() {
       </div>
 
       {error && (
-        <div className="mb-4 rounded-lg border border-red-900 bg-red-950/50 px-4 py-2 text-sm text-red-300">
+        <div className="mb-4 rounded-lg border border-red-900 bg-red-950/50 px-4 py-2 text-sm text-red-300 light:border-red-200 light:bg-red-50 light:text-red-600">
           {error}
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-lg border border-neutral-800">
+      <div className="overflow-x-auto rounded-lg border border-neutral-800 light:border-neutral-200">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-neutral-900 text-left text-neutral-400">
+            <tr className="bg-neutral-900 text-left text-neutral-400 light:bg-neutral-50 light:text-neutral-500">
               <Th label="Symbol" onClick={() => toggleSort("symbol")} active={sortKey === "symbol"} dir={sortDir} />
               <Th label="Last Price" onClick={() => toggleSort("close")} active={sortKey === "close"} dir={sortDir} align="right" />
               <Th label="24h Change" onClick={() => toggleSort("change")} active={sortKey === "change"} dir={sortDir} align="right" />
@@ -195,15 +197,21 @@ function Row({
   badges: SignalColumn[];
 }) {
   const changeColor =
-    change === null ? "text-neutral-400" : change > 0 ? "text-emerald-400" : change < 0 ? "text-red-400" : "text-neutral-400";
+    change === null
+      ? "text-neutral-400"
+      : change > 0
+        ? "text-emerald-400 light:text-emerald-600"
+        : change < 0
+          ? "text-red-400 light:text-red-600"
+          : "text-neutral-400";
 
   const matchedBadges = badges.filter((b) =>
     b.group === "bullish" ? signals.bullish[b.key as BullishSignalKey] : signals.bearish[b.key as BearishSignalKey]
   );
 
   return (
-    <tr className="border-t border-neutral-800 hover:bg-neutral-900/60">
-      <td className="px-4 py-3 font-medium text-neutral-100">
+    <tr className="border-t border-neutral-800 hover:bg-neutral-900/60 light:border-neutral-200 light:hover:bg-neutral-50">
+      <td className="px-4 py-3 font-medium text-neutral-100 light:text-neutral-900">
         <div className="flex flex-wrap items-center gap-1.5">
           <span>{ticker.symbol}</span>
           {matchedBadges.map((b) => (
@@ -211,8 +219,8 @@ function Row({
               key={b.key}
               className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium leading-none whitespace-nowrap ${
                 b.group === "bullish"
-                  ? "bg-emerald-900/40 text-emerald-400"
-                  : "bg-red-900/40 text-red-400"
+                  ? "bg-emerald-900/40 text-emerald-400 light:bg-emerald-100 light:text-emerald-700"
+                  : "bg-red-900/40 text-red-400 light:bg-red-100 light:text-red-700"
               }`}
             >
               {b.label}
@@ -222,10 +230,10 @@ function Row({
       </td>
       <td className="px-4 py-3 text-right tabular-nums">{formatPrice(ticker.close)}</td>
       <td className={`px-4 py-3 text-right tabular-nums ${changeColor}`}>{formatPercent(change)}</td>
-      <td className="px-4 py-3 text-right tabular-nums text-neutral-300">
+      <td className="px-4 py-3 text-right tabular-nums text-neutral-300 light:text-neutral-600">
         {formatCompact(ticker.turnover_usd ?? ticker.volume)}
       </td>
-      <td className="px-4 py-3 text-right tabular-nums text-neutral-300">
+      <td className="px-4 py-3 text-right tabular-nums text-neutral-300 light:text-neutral-600">
         {formatCompact(ticker.oi_value_usd ?? ticker.oi)}
       </td>
     </tr>
@@ -253,7 +261,7 @@ function Th({
       }`}
     >
       {label}
-      {active && <span className="ml-1 text-neutral-500">{dir === "asc" ? "▲" : "▼"}</span>}
+      {active && <span className="ml-1 text-neutral-500 light:text-neutral-400">{dir === "asc" ? "▲" : "▼"}</span>}
     </th>
   );
 }
