@@ -1,25 +1,37 @@
 import type { SymbolLevels, Ticker } from "../types/market";
 import { toNumber } from "./format";
 
-export type BullishSignalKey = "high" | "r1" | "r2" | "r3" | "r4" | "r5";
-export type BearishSignalKey = "low" | "s1" | "s2" | "s3" | "s4" | "s5";
+export const PIVOT_LEVEL_COUNT = 15;
+type LevelDigit =
+  | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15;
 
-export const BULLISH_OPTIONS: { key: BullishSignalKey; label: string }[] = [
-  { key: "high", label: "High" },
-  { key: "r1", label: "R1 Breakout" },
-  { key: "r2", label: "R2 Breakout" },
-  { key: "r3", label: "R3 Breakout" },
-  { key: "r4", label: "R4 Breakout" },
-  { key: "r5", label: "R5 Breakout" },
+export type BullishSignalKey = "high" | `r${LevelDigit}`;
+export type BearishSignalKey = "low" | `s${LevelDigit}`;
+
+interface SignalOption<K extends string> {
+  key: K;
+  label: string;
+  shortLabel: string;
+}
+
+const LEVEL_NUMBERS = Array.from({ length: PIVOT_LEVEL_COUNT }, (_, i) => i + 1);
+
+export const BULLISH_OPTIONS: SignalOption<BullishSignalKey>[] = [
+  { key: "high", label: "High", shortLabel: "High" },
+  ...LEVEL_NUMBERS.map((n) => ({
+    key: `r${n}` as BullishSignalKey,
+    label: `R${n} Breakout`,
+    shortLabel: `R${n}`,
+  })),
 ];
 
-export const BEARISH_OPTIONS: { key: BearishSignalKey; label: string }[] = [
-  { key: "low", label: "Low" },
-  { key: "s1", label: "S1 Breakout" },
-  { key: "s2", label: "S2 Breakout" },
-  { key: "s3", label: "S3 Breakout" },
-  { key: "s4", label: "S4 Breakout" },
-  { key: "s5", label: "S5 Breakout" },
+export const BEARISH_OPTIONS: SignalOption<BearishSignalKey>[] = [
+  { key: "low", label: "Low", shortLabel: "Low" },
+  ...LEVEL_NUMBERS.map((n) => ({
+    key: `s${n}` as BearishSignalKey,
+    label: `S${n} Breakout`,
+    shortLabel: `S${n}`,
+  })),
 ];
 
 // A live "high"/"low" keeps updating to match the current price the instant a
@@ -51,25 +63,16 @@ export function evaluateSignals(
   const high = levels?.high ?? 0;
   const low = levels?.low ?? 0;
   const rangeOk = hasMeaningfulRange(high, low);
-  const [r1, r2, r3, r4, r5] = levels?.r ?? [Infinity, Infinity, Infinity, Infinity, Infinity];
-  const [s1, s2, s3, s4, s5] = levels?.s ?? [-Infinity, -Infinity, -Infinity, -Infinity, -Infinity];
+  const r = levels?.r ?? [];
+  const s = levels?.s ?? [];
 
-  return {
-    bullish: {
-      high: rangeOk && isNear(close, high, "above"),
-      r1: close > r1,
-      r2: close > r2,
-      r3: close > r3,
-      r4: close > r4,
-      r5: close > r5,
-    },
-    bearish: {
-      low: rangeOk && isNear(close, low, "below"),
-      s1: close < s1,
-      s2: close < s2,
-      s3: close < s3,
-      s4: close < s4,
-      s5: close < s5,
-    },
-  };
+  const bullish = { high: rangeOk && isNear(close, high, "above") } as Record<BullishSignalKey, boolean>;
+  const bearish = { low: rangeOk && isNear(close, low, "below") } as Record<BearishSignalKey, boolean>;
+
+  LEVEL_NUMBERS.forEach((n) => {
+    bullish[`r${n}` as BullishSignalKey] = close > (r[n - 1] ?? Infinity);
+    bearish[`s${n}` as BearishSignalKey] = close < (s[n - 1] ?? -Infinity);
+  });
+
+  return { bullish, bearish };
 }

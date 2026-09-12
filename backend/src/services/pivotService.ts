@@ -4,13 +4,15 @@ export type Timeframe = CandleResolution | "1w";
 
 export const TIMEFRAMES: Timeframe[] = ["5m", "15m", "1h", "4h", "1d", "1w"];
 
+export const PIVOT_LEVEL_COUNT = 15;
+
 export interface SymbolLevels {
   symbol: string;
   high: number;
   low: number;
   pivot: number;
-  r: [number, number, number, number, number];
-  s: [number, number, number, number, number];
+  r: number[];
+  s: number[];
 }
 
 const TTL_MS: Record<Timeframe, number> = {
@@ -59,6 +61,17 @@ async function getWeeklyCandles(symbol: string): Promise<Candle[]> {
     }));
 }
 
+// Extends the classic 3 pivot levels (R1-R3 / S1-S3) with the same recurrence
+// used to derive R4/R5 in the traditional formula: each next level is the
+// previous one plus the trend of the last two. Applied out to R15/S15.
+function extendLevels([l1, l2, l3]: [number, number, number], count: number): number[] {
+  const levels = [l1, l2, l3];
+  for (let n = 3; n < count; n++) {
+    levels.push(levels[n - 1] + (levels[n - 2] - levels[n - 3]));
+  }
+  return levels;
+}
+
 function pivotsFrom(prev: Candle) {
   const { high: H, low: L, close: C } = prev;
   const pivot = (H + L + C) / 3;
@@ -68,11 +81,11 @@ function pivotsFrom(prev: Candle) {
   const s2 = pivot - (H - L);
   const r3 = H + 2 * (pivot - L);
   const s3 = L - 2 * (H - pivot);
-  const r4 = r3 + (r2 - r1);
-  const s4 = s3 - (s1 - s2);
-  const r5 = r4 + (r3 - r2);
-  const s5 = s4 - (s2 - s3);
-  return { pivot, r: [r1, r2, r3, r4, r5] as SymbolLevels["r"], s: [s1, s2, s3, s4, s5] as SymbolLevels["s"] };
+  return {
+    pivot,
+    r: extendLevels([r1, r2, r3], PIVOT_LEVEL_COUNT),
+    s: extendLevels([s1, s2, s3], PIVOT_LEVEL_COUNT),
+  };
 }
 
 async function computeLevels(symbol: string, timeframe: Timeframe): Promise<SymbolLevels | null> {

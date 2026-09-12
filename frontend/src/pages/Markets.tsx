@@ -17,7 +17,7 @@ import { TIMEFRAMES, type Ticker, type Timeframe } from "../types/market";
 type SortKey = "symbol" | "close" | "change" | "volume" | "oi";
 type SortDir = "asc" | "desc";
 type SignalGroup = "bullish" | "bearish";
-type SignalColumn = { key: BullishSignalKey | BearishSignalKey; label: string; group: SignalGroup };
+type SignalColumn = { key: BullishSignalKey | BearishSignalKey; label: string; shortLabel: string; group: SignalGroup };
 
 export default function Markets() {
   const { tickers, loading, error } = useLiveTickers();
@@ -217,13 +217,13 @@ function Row({
           {matchedBadges.map((b) => (
             <span
               key={b.key}
-              className={`rounded-full px-1.5 py-0.5 text-[10px] font-medium leading-none whitespace-nowrap ${
+              className={`rounded-full px-1.5 py-0.5 text-[11px] font-medium leading-none whitespace-nowrap ${
                 b.group === "bullish"
                   ? "bg-emerald-900/40 text-emerald-400 light:bg-emerald-100 light:text-emerald-700"
                   : "bg-red-900/40 text-red-400 light:bg-red-100 light:text-red-700"
               }`}
             >
-              {b.label}
+              {b.shortLabel}
             </span>
           ))}
         </div>

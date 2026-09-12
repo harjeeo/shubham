@@ -22,6 +22,6 @@ export interface SymbolLevels {
   high: number;
   low: number;
   pivot: number;
-  r: [number, number, number, number, number];
-  s: [number, number, number, number, number];
+  r: number[];
+  s: number[];
 }

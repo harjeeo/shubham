@@ -77,20 +77,22 @@ export default function SignalDropdown<K extends string>({
       {open && (
         <div className="absolute z-10 mt-2 w-56 rounded-lg border border-neutral-800 bg-neutral-900 py-2 shadow-lg light:border-neutral-200 light:bg-white">
           <div className={`px-3 py-1 text-sm font-semibold ${classes.text}`}>{title}</div>
-          {options.map((opt) => (
-            <label
-              key={opt.key}
-              className="flex cursor-pointer items-center gap-2 px-3 py-1.5 text-sm text-neutral-200 hover:bg-neutral-800 light:text-neutral-700 light:hover:bg-neutral-100"
-            >
-              <input
-                type="checkbox"
-                className={classes.check}
-                checked={selected.has(opt.key)}
-                onChange={() => toggle(opt.key)}
-              />
-              {opt.label}
-            </label>
-          ))}
+          <div className="max-h-72 overflow-y-auto">
+            {options.map((opt) => (
+              <label
+                key={opt.key}
+                className="flex cursor-pointer items-center gap-2 px-3 py-1.5 text-sm text-neutral-200 hover:bg-neutral-800 light:text-neutral-700 light:hover:bg-neutral-100"
+              >
+                <input
+                  type="checkbox"
+                  className={classes.check}
+                  checked={selected.has(opt.key)}
+                  onChange={() => toggle(opt.key)}
+                />
+                {opt.label}
+              </label>
+            ))}
+          </div>
         </div>
       )}
     </div>
