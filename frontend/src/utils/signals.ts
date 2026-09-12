@@ -41,8 +41,10 @@ export function evaluateSignals(
   levels: SymbolLevels | undefined
 ): { bullish: Record<BullishSignalKey, boolean>; bearish: Record<BearishSignalKey, boolean> } {
   const close = toNumber(ticker.close);
-  const todayHigh = toNumber(ticker.high);
-  const todayLow = toNumber(ticker.low);
+  // Some ticker payloads omit today's intraday high/low; fall back to the
+  // last known daily candle so Day High/Low still has something to compare against.
+  const todayHigh = toNumber(ticker.high) || levels?.prevDayHigh || 0;
+  const todayLow = toNumber(ticker.low) || levels?.prevDayLow || 0;
 
   const weekHigh = Math.max(levels?.weekHigh ?? -Infinity, todayHigh);
   const weekLow = Math.min(levels?.weekLow ?? Infinity, todayLow || Infinity);

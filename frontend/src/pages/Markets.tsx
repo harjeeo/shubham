@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Search01Icon, ArrowUp01Icon, ArrowDown01Icon } from "@hugeicons/core-free-icons";
+import { Search01Icon, ArrowUp01Icon, ArrowDown01Icon, Tick02Icon } from "@hugeicons/core-free-icons";
 import { useLiveTickers } from "../hooks/useLiveTickers";
 import { useLevels } from "../hooks/useLevels";
 import { formatCompact, formatPercent, formatPrice, getChangePercent, toNumber } from "../utils/format";
@@ -16,6 +16,8 @@ import type { Ticker } from "../types/market";
 
 type SortKey = "symbol" | "close" | "change" | "volume" | "oi";
 type SortDir = "asc" | "desc";
+type SignalGroup = "bullish" | "bearish";
+type SignalColumn = { key: BullishSignalKey | BearishSignalKey; label: string; group: SignalGroup };
 
 export default function Markets() {
   const { tickers, loading, error } = useLiveTickers();
@@ -25,6 +27,14 @@ export default function Markets() {
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [bullishFilter, setBullishFilter] = useState<Set<BullishSignalKey>>(new Set());
   const [bearishFilter, setBearishFilter] = useState<Set<BearishSignalKey>>(new Set());
+
+  const activeColumns: SignalColumn[] = useMemo(
+    () => [
+      ...BULLISH_OPTIONS.filter((o) => bullishFilter.has(o.key)).map((o) => ({ ...o, group: "bullish" as const })),
+      ...BEARISH_OPTIONS.filter((o) => bearishFilter.has(o.key)).map((o) => ({ ...o, group: "bearish" as const })),
+    ],
+    [bullishFilter, bearishFilter]
+  );
 
   const rows = useMemo(() => {
     const filtered = tickers.filter((t) =>
@@ -137,15 +147,25 @@ export default function Markets() {
               <Th label="24h Change" onClick={() => toggleSort("change")} active={sortKey === "change"} dir={sortDir} align="right" />
               <Th label="Volume" onClick={() => toggleSort("volume")} active={sortKey === "volume"} dir={sortDir} align="right" />
               <Th label="Open Interest" onClick={() => toggleSort("oi")} active={sortKey === "oi"} dir={sortDir} align="right" />
+              {activeColumns.map((col) => (
+                <th
+                  key={col.key}
+                  className={`px-4 py-3 text-center font-medium whitespace-nowrap ${
+                    col.group === "bullish" ? "text-emerald-400" : "text-red-400"
+                  }`}
+                >
+                  {col.label}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
-            {rows.map(({ ticker, change }) => (
-              <Row key={ticker.symbol} ticker={ticker} change={change} />
+            {rows.map(({ ticker, change, signals }) => (
+              <Row key={ticker.symbol} ticker={ticker} change={change} signals={signals} columns={activeColumns} />
             ))}
             {!loading && rows.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-neutral-500">
+                <td colSpan={5 + activeColumns.length} className="px-4 py-6 text-center text-neutral-500">
                   No pairs found.
                 </td>
               </tr>
@@ -157,7 +177,17 @@ export default function Markets() {
   );
 }
 
-function Row({ ticker, change }: { ticker: Ticker; change: number | null }) {
+function Row({
+  ticker,
+  change,
+  signals,
+  columns,
+}: {
+  ticker: Ticker;
+  change: number | null;
+  signals: ReturnType<typeof evaluateSignals>;
+  columns: SignalColumn[];
+}) {
   const changeColor =
     change === null ? "text-neutral-400" : change > 0 ? "text-emerald-400" : change < 0 ? "text-red-400" : "text-neutral-400";
 
@@ -170,6 +200,25 @@ function Row({ ticker, change }: { ticker: Ticker; change: number | null }) {
       <td className="px-4 py-3 text-right tabular-nums text-neutral-300">
         {formatCompact(ticker.oi_value_usd ?? ticker.oi)}
       </td>
+      {columns.map((col) => {
+        const active =
+          col.group === "bullish"
+            ? signals.bullish[col.key as BullishSignalKey]
+            : signals.bearish[col.key as BearishSignalKey];
+        return (
+          <td key={col.key} className="px-4 py-3 text-center">
+            {active ? (
+              <HugeiconsIcon
+                icon={Tick02Icon}
+                size={16}
+                className={col.group === "bullish" ? "inline text-emerald-400" : "inline text-red-400"}
+              />
+            ) : (
+              <span className="text-neutral-600">–</span>
+            )}
+          </td>
+        );
+      })}
     </tr>
   );
 }
